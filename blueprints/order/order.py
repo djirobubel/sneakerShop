@@ -37,8 +37,10 @@ def create_order():
             for item in items:
                 try:
                     new_product_item_id = item['productId']
+
                     new_product_size_id = item['sizeId']
                     Size.get(Size.id == new_product_size_id)
+
                     new_product_quantity = item['quantity']
                     product = Product.get(Product.id == new_product_item_id)
                     new_product_price = product.price * new_product_quantity
@@ -47,14 +49,14 @@ def create_order():
                                      size_id=new_product_size_id,
                                      quantity=new_product_quantity, price=new_product_price)
 
-                    return {'id': order.id}
-
                 except Product.DoesNotExist:
                     transaction.rollback()
                     return {'error': 'product not found'}, 404
                 except Size.DoesNotExist:
                     transaction.rollback()
                     return {'error': 'size not found'}, 404
+
+            return {'id': order.id}
 
         except Customer.DoesNotExist:
             transaction.rollback()
