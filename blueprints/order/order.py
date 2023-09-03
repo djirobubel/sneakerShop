@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, Response
 from models import *
 
 order_bp = Blueprint('order', __name__)
@@ -61,3 +61,18 @@ def create_order():
         except Customer.DoesNotExist:
             transaction.rollback()
             return {'error': 'customer not found'}, 404
+
+
+@order_bp.route('/orders/<id>', methods=['DELETE'])
+def delete_order(id):
+    try:
+        order = Order.get(Order.id == id)
+        order.delete_instance()
+
+        order_items = OrderItem.delete().where(OrderItem.order_id == id)
+        order_items.execute()
+
+        return Response(status=204)
+
+    except Order.DoesNotExist:
+        return {'error': 'order not found'}, 404
