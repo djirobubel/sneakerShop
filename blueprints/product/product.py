@@ -1,4 +1,4 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint
 from models import *
 
 product_bp = Blueprint('product', __name__)
