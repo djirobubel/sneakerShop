@@ -63,6 +63,44 @@ def create_order():
             return {'error': 'customer not found'}, 404
 
 
+@order_bp.route('/orders/<id>', methods=['PUT'])
+def update_order(id):
+    with db.atomic() as transaction:
+        try:
+            Order.get(Order.id == id)
+            order_items = OrderItem.delete().where(OrderItem.order_id == id)
+            order_items.execute()
+
+            items = request.json['items']
+            for item in items:
+                try:
+                    product_item_id = item['productId']
+
+                    product_size_id = item['sizeId']
+                    Size.get(Size.id == product_size_id)
+
+                    product_quantity = item['quantity']
+                    product = Product.get(Product.id == product_item_id)
+                    product_price = product.price * product_quantity
+
+                    OrderItem.create(order_id=id, product_id=product_item_id,
+                                     size_id=product_size_id,
+                                     quantity=product_quantity, price=product_price)
+
+                except Product.DoesNotExist:
+                    transaction.rollback()
+                    return {'error': 'product not found'}, 404
+                except Size.DoesNotExist:
+                    transaction.rollback()
+                    return {'error': 'size not found'}, 404
+
+            return Response(status=204)
+
+        except Order.DoesNotExist:
+            transaction.rollback()
+            return {'error': 'order not found'}, 404
+
+
 @order_bp.route('/orders/<id>', methods=['DELETE'])
 def delete_order(id):
     try:
